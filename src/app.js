@@ -1,26 +1,39 @@
 const app = require('express')();
 const consign = require('consign');
 const knex = require('knex');
-const knexfile = require('../knexfile');
-const knexLogger = require('knex-logger');
 
-//TODO criar chaveamento dinâmico
+const knexfile = require('../knexfile');
+
+// TODO criar chaveamento dinâmico
 app.db = knex(knexfile.test);
 
-app.use(knexLogger(app.db));
+app.get('/users', (req, res, next) => {
+  console.log('Passei aqui')
+  //res.status(200).send('H4ck3d by 0wn!');
+  next();
+});
 
-consign({cwd: 'src', verbose: false })
+consign({ cwd: 'src', verbose: false })
   .include('./config/middlewares.js')
   .then('./services')
   .then('./routes')
   .then('./config/routes.js')
-  .into(app)
+  .into(app);
 
 
 app.get('/', (req, res) => {
   res.status(200).send();
 });
-/* 
+
+app.use((err, req, res, next) => {
+  const { name, message, stack } = err;
+  if ( name == 'ValidationError' ) res.status(400).json({error: message});
+  else res.status(500).json({name, message, stack});
+  next(err);
+});
+
+
+/*
 app.db.on('query', (query) => {
   console.log({sql: query.sql, bindings: query.bindings ? query.bindings.join(',') : ''})
 })
